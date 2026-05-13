@@ -1,0 +1,8 @@
+pytest
+plawright
+pytest-playwright
+anthropic
+python-dotenv
+Pillow
+requests
+PyGithub
