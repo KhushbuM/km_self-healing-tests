@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11-slim'
+            args '--user root'
+        }
+    }
 
     environment {
         ANTHROPIC_API_KEY = credentials('ANTHROPIC_API_KEY')
@@ -12,10 +17,9 @@ pipeline {
         stage('Setup') {
             steps {
                 sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
                     pip install -r requirements.txt
                     playwright install chromium
+                    playwright install-deps chromium
                 '''
             }
         }
@@ -23,7 +27,6 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                    . venv/bin/activate
                     pytest tests/ -v --tb=short
                 '''
             }
@@ -37,7 +40,6 @@ pipeline {
             }
             steps {
                 sh '''
-                    . venv/bin/activate
                     python -m healer.runner
                 '''
             }
