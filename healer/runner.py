@@ -1,64 +1,67 @@
-import subprocess
-import sys
-from healer import heal_test, save_healed_test
+from healer.triage import triage_test
 
-def run_tests(test_path):
+# Every test with its URL and page name
+# Add new tests here as your project grows
+TESTS = [
+    {
+        "test_name":      "test_successful_login",
+        "test_path":      "tests/ui/test_login_ui.py::test_successful_login",
+        "page_url":       "https://practicetestautomation.com/practice-test-login/",
+        "test_page_name": "login_page"
+    },
+    {
+        "test_name":      "test_failed_login",
+        "test_path":      "tests/ui/test_login_ui.py::test_failed_login",
+        "page_url":       "https://practicetestautomation.com/practice-test-login/",
+        "test_page_name": "login_page"
+    },
+    {
+        "test_name":      "test_logout",
+        "test_path":      "tests/ui/test_login_ui.py::test_logout",
+        "page_url":       "https://practicetestautomation.com/practice-test-login/",
+        "test_page_name": "login_page"
+    }
+]
+
+
+def run_all():
     """
-    Runs pytest on a test file and returns
-    whether it passed and any error output
+    Runs every test through the full triage system independently
+    Each test gets its own API check, screenshot check, and heal attempt
     """
+    print("\n🚀 Starting Self Healing Test Framework")
+    print(f"📋 Running triage for {len(TESTS)} tests\n")
 
-    result = subprocess.run(
-        ["pytest", test_path, "-v", "--tb=short"],
-        capture_output=True,
-        text=True
-    )
+    # Track results
+    results = {
+        "passed":              0,
+        "pr-opened":           0,
+        "skipped-api-down":    0,
+        "skipped-product-bug": 0,
+        "healing-failed":      0
+    }
 
-    passed = result.returncode == 0
-    output = result.stdout + result.stderr
-    return passed, output
+    # Run each test independently through full triage
+    for test in TESTS:
+        result = triage_test(
+            test_name=     test["test_name"],
+            test_path=     test["test_path"],
+            page_url=      test["page_url"],
+            test_page_name=test["test_page_name"]
+        )
+        results[result] = results.get(result, 0) + 1
 
-def run_with_healing(test_path):
-    """
-    Runs a test - if it fails, heals it and runs again
-    """
-
-    print(f"\n Running: {test_path}")
-
-    #First run
-    passed, output = run_tests(test_path)
-
-    if passed:
-        print("✅ Tests passed - no healing needed !")
-        return
-    
-    # Tests failed - time to heal
-    print("❌ Tests failed -- calling Claude to fix ...")
-    print(f"Error: {output[-500]}") # shows last 500 chars of error
-
-    # Send to Claude
-    fixed_code = heal_test(test_path, output)
-
-    # Save the fix
-    save_healed_test(test_path, fixed_code)
-
-    # Run again with the fix
-    print("\n 🔄 Rerunning healed test ...")
-    passed, output = run_tests(test_path)
-
-    if passed:
-        print("✅ Self healing worked! Tests passing now!")
-    else:
-        print("⚠️ Healing attempt did not fix it — may need manual review")
-        print(output)
+    # Final summary
+    print(f"\n{'='*60}")
+    print(f"📊 FINAL SUMMARY")
+    print(f"{'='*60}")
+    print(f"✅ Passed:           {results['passed']}")
+    print(f"📬 PRs Opened:       {results['pr-opened']}")
+    print(f"🔴 API Down:         {results['skipped-api-down']}")
+    print(f"🟡 Product Bugs:     {results['skipped-product-bug']}")
+    print(f"🔵 Healing Failed:   {results['healing-failed']}")
+    print(f"{'='*60}\n")
 
 
 if __name__ == "__main__":
-    # Default to UI test if no argument given
-    test_path = sys.argv[1] if len(sys.argv) > 1 else "tests/ui/test_login_ui.py"
-    run_with_healing(test_path)
-
-    
-
-
-
+    run_all()
