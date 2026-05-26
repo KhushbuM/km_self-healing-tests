@@ -8,7 +8,7 @@ def test_successful_login(page):
     page.goto(BASE_URL)
 
     # Find the username and password fields and fill them
-    page.fill("#wrong-username", "student")
+    page.fill("#wron-username", "student")
     page.fill("#password", "Password123")
 
     # Click the login button
