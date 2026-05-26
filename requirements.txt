@@ -1,5 +1,5 @@
 pytest
-plawright
+playwright
 pytest-playwright
 anthropic
 python-dotenv
