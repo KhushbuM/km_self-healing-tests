@@ -26,7 +26,7 @@ def get_page_html(url):
     print(f"🌐 Opening page to inspect real HTML: {url}")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.goto(url)
 
