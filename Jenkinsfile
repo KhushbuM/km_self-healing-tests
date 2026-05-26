@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    
+    options {
+        skipStagesAfterUnstable()
+    }
 
     environment {
         ANTHROPIC_API_KEY = credentials('ANTHROPIC_API_KEY')
@@ -8,7 +12,6 @@ pipeline {
     }
 
     stages {
-
         stage('Setup') {
             steps {
                 sh '''
@@ -22,19 +25,16 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh '''
-                    . venv/bin/activate
-                    pytest tests/ -v --tb=short
-                '''
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    sh '''
+                        . venv/bin/activate
+                        pytest tests/ -v --tb=short
+                    '''
+                }
             }
         }
 
         stage('Self Heal') {
-            when {
-                expression {
-                    currentBuild.result == 'FAILURE' || currentBuild.result == null
-                }
-            }
             steps {
                 sh '''
                     . venv/bin/activate
@@ -49,7 +49,7 @@ pipeline {
             echo '✅ All tests passed — no healing needed!'
         }
         failure {
-            echo '❌ Tests failed — self healing triggered!'
+            echo '❌ Pipeline failed!'
         }
         always {
             echo '📊 Pipeline complete'
