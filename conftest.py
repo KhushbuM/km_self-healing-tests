@@ -16,3 +16,4 @@ def page(browser):
     page = context.new_page() # 1. SETUP - runs first
     yield page                # 2. PAUSE - hands 'page' to your test, waits here
     page.close()              # 3. TEARDOWN - runs after test finishes
+# trigger test
