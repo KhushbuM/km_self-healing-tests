@@ -9,7 +9,6 @@ def browser():
         browser.close()
 
 
-
 @pytest.fixture
 def page(browser):
     # Create fresh page for each test
