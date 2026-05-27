@@ -1,8 +1,16 @@
 pipeline {
     agent any
-    
-    options {
-        skipStagesAfterUnstable()
+
+    triggers {
+        GenericTrigger(
+            genericVariables: [
+                [key: 'ref', value: '$.ref']
+            ],
+            causeString: 'Triggered by GitHub push',
+            token: 'self-healing-token',
+            printContributedVariables: true,
+            printPostContent: false
+        )
     }
 
     environment {
@@ -46,7 +54,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ All tests passed — no healing needed!'
+            echo '✅ All tests passed!'
         }
         failure {
             echo '❌ Pipeline failed!'
