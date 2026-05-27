@@ -23,7 +23,7 @@ def test_successful_login(page):
     wait_for_page_ready(page)
 
     # Find the username and password fields and fill them
-    page.fill("#wrong-username", "student")
+    page.fill("#username", "student")
     page.fill("#password", "Password123")
 
     # Click the login button
