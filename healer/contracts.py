@@ -6,6 +6,7 @@ PAGE_CONTRACTS = {
     "login_page": {
         "url": "https://practicetestautomation.com/practice-test-login/",
         "required_elements": [
+            "#toggle-navigation",
             "#username",
             "#password",
             "#submit",
