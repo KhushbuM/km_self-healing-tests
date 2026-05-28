@@ -8,13 +8,21 @@ Built with Python, Playwright, and Claude API. Integrated with GitHub and Jenkin
 
 ## 🧠 How It Works
 
-When a test fails, instead of just reporting the failure, this framework:
-
-1. **Checks API health** — hits the page URL to confirm the backend is up
-2. **Compares screenshots** — validates the UI hasn't changed unexpectedly  
-3. **Self-heals the test** — sends the broken test + real page HTML to Claude AI, which finds the correct selector and raises a Pull Request with the fix
-
-A human reviews and merges the PR. No more manually hunting for broken selectors!
+When a test fails, the framework triages it in 3 steps:
+Test Fails
+     ↓
+Step 1: API Health Check
+     ↓ Non-200 → 🔴 GitHub Issue "API Down" → Skip test
+     ↓ 200
+Step 2: HTML Contract Validation
+     ↓ Element missing → 🟡 GitHub Issue "Product Bug" → Skip test
+     ↓ New element found → 🟡 PR to update contract + GitHub Issue
+     ↓ Contract valid
+Step 3: Self Heal
+     → Claude inspects real page HTML
+     → Finds correct selector
+     → Opens a Pull Request with the fix
+     → Human reviews and merges ✅
 
 ---
 

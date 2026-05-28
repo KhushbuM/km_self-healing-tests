@@ -34,10 +34,14 @@ Instead of a human doing all that work, this framework does it automatically:
    If the website is down, there is no point investigating further.
    A ticket is raised automatically and the test is skipped.
 
-2. **Did the website look different?**
-   A screenshot of the website is compared against a saved golden copy.
-   If they look different, it is likely a product change or bug.
-   A ticket is raised automatically.
+2. **Did the page structure change?**
+   The framework checks if all required elements still exist on the page 
+   using an HTML contract — a simple list of elements that must be present.
+
+   If an element is **missing** → product bug → ticket raised → stop
+   If a **new element** is found → PR raised to update the contract → 
+   human reviews whether it was intentional
+   If everything looks correct → move to Step 3
 
 3. **Is it just a broken test selector?**
    If the website is up and looks correct, the test itself is broken.
