@@ -59,7 +59,8 @@ def ensure_label(label_name):
         "api_down" : ("d73a4a", "API is returning non-200 status"),
         "product-bug": ("e4e669", "Screenshot mismatch detected"),
         "healing-failed": ("0075ca", "Self healing could not fix the test"),
-        "healed": ("0e8a16", "Test was successfully self healed")
+        "healed": ("0e8a16", "Test was successfully self healed"),
+        "change-alert": ("fbca04", "New element detected on page")
     }
 
     # Get existing labels in the repo

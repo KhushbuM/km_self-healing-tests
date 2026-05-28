@@ -1,9 +1,11 @@
+from healer.contracts import PAGE_CONTRACTS
 import requests
-from healer.screenshot import check_screenshots
 from healer.sim import create_sim
 from healer.healer import create_healing_pr
 from datetime import datetime
 import subprocess
+from healer.html_check import check_page_contract, create_contract_pr
+
 
 def check_api_health(url):
     """
@@ -50,7 +52,7 @@ def run_single_test(test_path):
     output =result.stdout + result.stderr
     return passed, output
 
-def triage_test(test_name, test_path, page_url, test_page_name):
+def triage_test(test_name, test_path, page_url, test_page_name, checked_contracts=None):
     """
     Full triage for a single test:
     Step 1 → API check
@@ -86,34 +88,61 @@ Skipping this test — no point analysing further.
         return "skipped-api-down"
     
     # ─────────────────────────────────
-    # STEP 2: Screenshot Comparison
+    # STEP 2: HTML Contract Check
     # ─────────────────────────────────
-    print(f"\n📸 Step 2: Screenshot validation")
-    similarity, is_match = check_screenshots(
-        url=page_url,
-        test_name=test_page_name
-    )
+    print(f"\n🔍 Step 2: HTML contract validation")
 
-    if not is_match:
-        create_sim(
-            title=f"Product Bug — UI changed for {test_name}",
-            body=f"""
-**Test:** {test_name}
-**File:** {test_path}
-**URL:** {page_url}
-**Screenshot similarity:** {similarity}% (threshold: 95%)
-**Time:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    contract = PAGE_CONTRACTS.get(test_page_name)
 
-Screenshot comparison failed.
-UI has changed from baseline — likely a product bug.
-Please review:
-- Baseline: screenshots/baseline/{test_page_name}.png
-- Actual:   screenshots/actual/{test_page_name}.png
-            """,
-            label="product-bug"
+    if contract is None:
+        print(f"⚠️ No contract defined for {test_page_name} — skipping")
+    elif test_page_name in (checked_contracts or set()):
+        # Already checked this page in this run — skip contract PR
+        print(f"⚠️ Contract already checked for {test_page_name} — skipping duplicate check")
+    else:
+        status, reason, new_elements = check_page_contract(
+            page_url,
+            contract,
+            contract_name=test_page_name
         )
-        print(f"⏭️ Skipping {test_name} — product bug, not automation issue")
-        return "skipped-product-bug"
+
+        # Mark this page as checked
+        if checked_contracts is not None:
+            checked_contracts.add(test_page_name)
+
+        if status == "product_bug":
+            create_sim(
+                title=f"Product Bug — Element removed on {test_name}",
+                body=(
+                    f"**Test:** {test_name}\n"
+                    f"**URL:** {page_url}\n"
+                    f"**Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                    f"**Issue:** {reason}\n\n"
+                    "A required element has been removed from the page.\n"
+                    "This is likely a product bug — please investigate."
+                ),
+                label="product-bug"
+            )
+            print(f"⏭️ Skipping {test_name} — product bug detected")
+            return "skipped-product-bug"
+
+        elif status == "change_detected":
+            pr = create_contract_pr(test_page_name, new_elements)
+            create_sim(
+                title=f"Change Alert — New elements on {test_page_name}",
+                body=(
+                    f"**Page:** {test_page_name}\n"
+                    f"**URL:** {page_url}\n"
+                    f"**Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                    f"**New elements found:** {', '.join(new_elements)}\n\n"
+                    "New elements were detected on the page.\n"
+                    "A PR has been raised to update the contract.\n\n"
+                    f"**Contract PR:** {pr.html_url}\n\n"
+                    "Please review and merge if intentional."
+                ),
+                label="change-alert"
+            )
+            print(f"🟡 Contract PR created — continuing to self heal")
     
    # ─────────────────────────────────
     # STEP 3: Self Heal via PR

@@ -1,7 +1,9 @@
 from healer.triage import triage_test
 
-# Every test with its URL and page name
-# Add new tests here as your project grows
+# Track pages already checked for contract changes
+# So we don't create duplicate PRs for the same page
+checked_contracts = set()
+
 TESTS = [
     {
         "test_name":      "test_successful_login",
@@ -25,14 +27,9 @@ TESTS = [
 
 
 def run_all():
-    """
-    Runs every test through the full triage system independently
-    Each test gets its own API check, screenshot check, and heal attempt
-    """
     print("\n🚀 Starting Self Healing Test Framework")
     print(f"📋 Running triage for {len(TESTS)} tests\n")
 
-    # Track results
     results = {
         "passed":              0,
         "pr-opened":           0,
@@ -41,17 +38,16 @@ def run_all():
         "healing-failed":      0
     }
 
-    # Run each test independently through full triage
     for test in TESTS:
         result = triage_test(
-            test_name=     test["test_name"],
-            test_path=     test["test_path"],
-            page_url=      test["page_url"],
-            test_page_name=test["test_page_name"]
+            test_name=      test["test_name"],
+            test_path=      test["test_path"],
+            page_url=       test["page_url"],
+            test_page_name= test["test_page_name"],
+            checked_contracts=checked_contracts  # ← pass it in
         )
         results[result] = results.get(result, 0) + 1
 
-    # Final summary
     print(f"\n{'='*60}")
     print(f"📊 FINAL SUMMARY")
     print(f"{'='*60}")
